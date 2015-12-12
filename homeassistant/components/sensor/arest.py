@@ -6,13 +6,14 @@ The arest sensor will consume an exposed aREST API of a device.
 For more details about this platform, please refer to the documentation at
 https://home-assistant.io/components/sensor.arest/
 """
-import logging
-import requests
 from datetime import timedelta
+import logging
 
-from homeassistant.util import Throttle
-from homeassistant.helpers.entity import Entity
+import requests
+
 from homeassistant.const import DEVICE_DEFAULT_NAME
+from homeassistant.helpers.entity import Entity
+from homeassistant.util import Throttle
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -126,15 +127,14 @@ class ArestSensor(Entity):
         if 'error' in values:
             return values['error']
         elif 'value' in values:
-            if self._corr_factor is not None \
-                    and self._decimal_places is not None:
-                return round((float(values['value']) *
-                              float(self._corr_factor)), self._decimal_places)
-            elif self._corr_factor is not None \
-                    and self._decimal_places is None:
-                return round(float(values['value']) * float(self._corr_factor))
-            else:
-                return values['value']
+            value = values['value']
+            if self._corr_factor is not None:
+                value = float(value) * float(self._corr_factor)
+            if self._decimal_places is not None:
+                value = round(value, self._decimal_places)
+            if self._decimal_places == 0:
+                value = int(value)
+            return value
         else:
             return values.get(self._variable, 'n/a')
 

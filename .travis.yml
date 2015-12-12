@@ -1,10 +1,9 @@
 sudo: false
 language: python
-cache:
-  directories:
-    - $HOME/virtualenv/python3.4.2/
+cache: pip
 python:
-  - "3.4"
+  - 3.4
+  - 3.5
 install:
   - script/bootstrap_server
 script:

@@ -4,6 +4,7 @@ pyyaml>=3.11,<4
 pytz>=2015.4
 pip>=7.0.0
 vincenty==0.1.3
+jinja2>=2.8
 
 # homeassistant.components.arduino
 PyMata==2.07a
@@ -18,10 +19,16 @@ python-nmap==0.4.3
 pysnmp==4.2.5
 
 # homeassistant.components.discovery
-netdisco==0.5.1
+netdisco==0.5.2
+
+# homeassistant.components.ecobee
+https://github.com/nkgilley/python-ecobee-api/archive/92a2f330cbaf601d0618456fdd97e5a8c42c1c47.zip#python-ecobee==0.0.4
 
 # homeassistant.components.ifttt
 pyfttt==0.3
+
+# homeassistant.components.influxdb
+influxdb==2.10.0
 
 # homeassistant.components.isy994
 PyISY==1.0.5
@@ -36,7 +43,7 @@ blinkstick==1.1.7
 phue==0.8
 
 # homeassistant.components.light.limitlessled
-ledcontroller==1.1.0
+limitlessled==1.0.0
 
 # homeassistant.components.light.tellstick
 # homeassistant.components.sensor.tellstick
@@ -75,6 +82,9 @@ https://github.com/bashwork/pymodbus/archive/d7fc4f1cc975631e0a9011390e8017f64b6
 
 # homeassistant.components.mqtt
 paho-mqtt==1.1
+
+# homeassistant.components.mqtt
+jsonpath-rw==1.4.0
 
 # homeassistant.components.notify.pushbullet
 pushbullet.py==0.9.0
@@ -145,13 +155,13 @@ https://github.com/rkabadi/pyedimax/archive/365301ce3ff26129a7910c501ead09ea625f
 hikvision==0.4
 
 # homeassistant.components.switch.orvibo
-orvibo==1.0.0
+orvibo==1.0.1
 
 # homeassistant.components.switch.wemo
-pywemo==0.3.2
+pywemo==0.3.3
 
 # homeassistant.components.thermostat.honeywell
-evohomeclient==0.2.3
+evohomeclient==0.2.4
 
 # homeassistant.components.thermostat.nest
 python-nest==2.6.0
@@ -165,3 +175,5 @@ https://github.com/persandstrom/python-verisure/archive/9873c4527f01b1ba1f72ae60
 # homeassistant.components.zwave
 pydispatcher==2.0.5
 
+# homeassistant.components.heatmiser
+heatmiserV3==0.9.1

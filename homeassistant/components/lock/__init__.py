@@ -20,7 +20,6 @@ from homeassistant.const import (
 from homeassistant.components import (group, wink)
 
 DOMAIN = 'lock'
-DEPENDENCIES = []
 SCAN_INTERVAL = 30
 
 GROUP_NAME_ALL_LOCKS = 'all locks'
@@ -35,10 +34,6 @@ MIN_TIME_BETWEEN_SCANS = timedelta(seconds=10)
 # Maps discovered services to their platforms
 DISCOVERY_PLATFORMS = {
     wink.DISCOVER_LOCKS: 'wink'
-}
-
-PROP_TO_ATTR = {
-    'locked': ATTR_LOCKED
 }
 
 _LOGGER = logging.getLogger(__name__)
