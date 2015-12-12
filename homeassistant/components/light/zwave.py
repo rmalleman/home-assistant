@@ -8,11 +8,12 @@ https://home-assistant.io/components/light.zwave/
 """
 # pylint: disable=import-error
 import homeassistant.components.zwave as zwave
+import logging
+_LOGGER = logging.getLogger(__name__)
 
 from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS)
 from threading import Timer
-
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """ Find and add Z-Wave lights. """
@@ -61,17 +62,34 @@ class ZwaveDimmer(Light):
         self._timer = None
 
         dispatcher.connect(
-            self._value_changed, ZWaveNetwork.SIGNAL_VALUE_CHANGED)
+            self._value_changed, ZWaveNetwork.SIGNAL_VALUE)
+
+        self._value.refresh()
 
     def _value_changed(self, value):
         """ Called when a value has changed on the network. """
+        # Discard all messages from other nodes
+        if self._node.node_id != value.node.node_id:
+            return
+        # Discard and log messages from other values on this node
         if self._value.value_id != value.value_id:
+            _LOGGER.info('%s %s value changed to "%s", ignoring',
+                      self._node.name, value.label, value.data)
             return
 
+        updated_brightness, updated_state = brightness_state(value)
         if self._refreshing:
+            _LOGGER.info('%s %s refreshed to "%s". Updating...',
+                          self._node.name, value.label, value.data)
             self._refreshing = False
             self._brightness, self._state = brightness_state(value)
+        elif updated_brightness != self._brightness or updated_state != self._state:
+            _LOGGER.info('%s %s changed to "%s". Updating...',
+                          self._node.name, value.label, value.data)
+            self._brightness, self._state = brightness_state(value)
         else:
+            _LOGGER.info('%s %s refreshing...',
+                          self._node.name, value.label)
             def _refresh_value():
                 """Used timer callback for delayed value refresh."""
                 self._refreshing = True
@@ -117,10 +135,25 @@ class ZwaveDimmer(Light):
         # brightness.
         brightness = (self._brightness / 255) * 99
 
+        _LOGGER.info('setting %s of %s to %s...',
+                      self._value.label, self._node.name, brightness)
         if self._node.set_dimmer(self._value.value_id, brightness):
+            _LOGGER.info('%s of %s successfully set to %s. Setting state to on.',
+                          self._value.label, self._node.name, brightness)
             self._state = STATE_ON
+        else:
+            _LOGGER.info('error setting %s of %s to %s!',
+                          self._value.label, self._node.name, brightness)
+
 
     def turn_off(self, **kwargs):
         """ Turn the device off. """
+        _LOGGER.info('Turning %s off...',
+                     self._node.name)
         if self._node.set_dimmer(self._value.value_id, 0):
+            _LOGGER.info('%s of %s successfully set to %s. Setting state to off.',
+                          self._value.label, self._node.name, 0)
             self._state = STATE_OFF
+        else:
+            _LOGGER.info('error setting %s of %s to %s!',
+                          self._value.label, self._node.name, 0)
