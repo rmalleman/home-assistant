@@ -16,7 +16,7 @@ from homeassistant.const import (
 _LOGGER = logging.getLogger(__name__)
 
 SUPPORT_MPR = SUPPORT_VOLUME_SET | SUPPORT_TURN_ON | \
-              SUPPORT_VOLUME_MUTE | SUPPORT_TURN_OFF 
+              SUPPORT_VOLUME_MUTE | SUPPORT_TURN_OFF
 
 DOMAIN = 'mpr_6zhmaut'
 
@@ -47,8 +47,8 @@ class MprZone(MediaPlayerDevice):
         self._name = name
         self._host = host
         self._port = port
-        self._zone = zone 
-        self._proto = proto 
+        self._zone = zone
+        self._proto = proto
         self._state_hash = {}
 
     @property
