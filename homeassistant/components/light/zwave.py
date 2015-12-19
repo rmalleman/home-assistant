@@ -146,6 +146,7 @@ class ZwaveDimmer(Light):
         else:
             _LOGGER.info('error setting %s of %s to %s!',
                           self._value.label, self._node.name, brightness)
+        self.update_ha_state()
 
 
     def turn_off(self, **kwargs):
@@ -159,3 +160,4 @@ class ZwaveDimmer(Light):
         else:
             _LOGGER.info('error setting %s of %s to %s!',
                           self._value.label, self._node.name, 0)
+        self.update_ha_state()
