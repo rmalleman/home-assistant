@@ -44,7 +44,7 @@ Device = namedtuple("Device", ["mac", "name", "ip", "last_update"])
 
 def _arp(ip_address):
     """ Get the MAC address for a given IP. """
-    cmd = ['arp', '-n', ip_address]
+    cmd = ['/usr/sbin/arp', '-n', ip_address]
     arp = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     out, _ = arp.communicate()
     match = re.search(r'(([0-9A-Fa-f]{1,2}\:){5}[0-9A-Fa-f]{1,2})', str(out))
