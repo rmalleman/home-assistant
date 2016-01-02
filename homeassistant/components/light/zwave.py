@@ -66,8 +66,6 @@ class ZwaveDimmer(Light):
         dispatcher.connect(
             self._value_changed, ZWaveNetwork.SIGNAL_VALUE)
 
-        self._value.refresh()
-
     def _value_changed(self, value):
         """ Called when a value has changed on the network. """
         # Discard all messages from other nodes
