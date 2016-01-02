@@ -94,13 +94,23 @@ def setup(hass, config):
             # Now inspect the attributes and submit anything that looks like a
             # float
             attributes = dict(state.attributes)
+            ignored_attributes = [
+                'hidden',
+                'can_cancel',
+                'media_title',
+                'supported_media_commands',
+                'node_id',
+                'auto'
+            ]
             for key in attributes:
+                if key in ignored_attributes:
+                    continue
                 try:
                     value = float(attributes[key])
                     metrics_queue.add(
                         (namespace + 'states.' + state.entity_id + '.' + key),
                         value)
-                except ValueError:
+                except (TypeError, ValueError):
                     pass
 
     hass.bus.listen(EVENT_STATE_CHANGED, metrics_listener)
