@@ -14,7 +14,7 @@ from homeassistant.const import (
     STATE_OFF, STATE_ON)
 
 _LOGGER = logging.getLogger(__name__)
-logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 SUPPORT_MPR = SUPPORT_VOLUME_SET | SUPPORT_TURN_ON | \
               SUPPORT_VOLUME_MUTE | SUPPORT_TURN_OFF
