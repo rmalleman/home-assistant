@@ -76,7 +76,7 @@ class ZwaveDimmer(Light):
         # Log old and new data.
         updated_brightness, updated_state = brightness_state(value)
         _LOGGER.info('node="%s" label="%s" at=value_changed old=%s/%s '
-                     'new=%s/%s data=%s refreshing=%s timer=%s',
+                     'new=%s/%s data=%s refreshing=%s timer="%s"',
                      self._node.name, value.label,
                      self._state, self._brightness,
                      updated_state, updated_brightness, value.data,
@@ -88,7 +88,7 @@ class ZwaveDimmer(Light):
         if self._refreshing:
             # Only update brightness and state if we solicited a refresh.
             _LOGGER.info('node="%s" label="%s" at=updating_state old=%s/%s '
-                         'new=%s/%s data=%s refreshing=%s timer=%s',
+                         'new=%s/%s data=%s refreshing=%s timer="%s"',
                          self._node.name, value.label,
                          self._state, self._brightness,
                          updated_state, updated_brightness, value.data,
@@ -100,7 +100,7 @@ class ZwaveDimmer(Light):
         else:
             def _refresh_value():
                 """Used timer callback for delayed value refresh."""
-                _LOGGER.info('node="%s" label="%s" at=refreshing timer=%s',
+                _LOGGER.info('node="%s" label="%s" at=refreshing timer="%s"',
                              self._node.name, self._value.label, self._timer)
                 self._value.refresh()
 
@@ -109,7 +109,7 @@ class ZwaveDimmer(Light):
             self._timer.start()
             # Otherwise, schedule a refresh soon in the future.
             _LOGGER.info('node="%s" label="%s" at=scheduling_timer old=%s/%s '
-                         'new=%s/%s data=%s refreshing=%s timer=%s',
+                         'new=%s/%s data=%s refreshing=%s timer="%s"',
                          self._node.name, value.label,
                          self._state, self._brightness,
                          updated_state, updated_brightness, value.data,
@@ -122,7 +122,7 @@ class ZwaveDimmer(Light):
         """ Cancel existing timer. """
         if self._timer is not None and self._timer.isAlive():
             _LOGGER.info('node="%s" label="%s" at=cancel_existing_timer '
-                         ' timer=%s',
+                         ' timer="%s"',
                          self._node.name, self._value.label, self._timer)
             self._timer.cancel()
             self._timer = None
