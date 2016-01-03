@@ -8,14 +8,15 @@ https://home-assistant.io/components/light.zwave/
 """
 # Because we do not compile openzwave on CI
 # pylint: disable=import-error
-import homeassistant.components.zwave as zwave
-import logging
-_LOGGER = logging.getLogger(__name__)
 from threading import Timer
+import logging
 
 from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS)
 import homeassistant.components.zwave as zwave
+
+_LOGGER = logging.getLogger(__name__)
+
 
 def setup_platform(hass, config, add_devices, discovery_info=None):
     """ Find and add Z-Wave lights. """
@@ -64,32 +65,36 @@ class ZwaveDimmer(Light):
         self._timer = None
 
         dispatcher.connect(
-            self._value_changed, ZWaveNetwork.SIGNAL_VALUE)
+            self._value_changed, ZWaveNetwork.SIGNAL_VALUE_CHANGED)
 
     def _value_changed(self, value):
         """ Called when a value has changed on the network. """
-        # Discard all messages from other nodes
-        if self._node.node_id != value.node.node_id:
-            return
+
         # Discard and log messages from other values on this node
         if self._value.value_id != value.value_id:
-            _LOGGER.info('%s %s value changed to "%s", ignoring',
-                      self._node.name, value.label, value.data)
+            _LOGGER.info('dropping message for the wrong value')
+            return
+        # Discard all messages from other nodes
+        if self._node.node_id != value.node.node_id:
+            _LOGGER.info('dropping message for the wrong node')
             return
 
         updated_brightness, updated_state = brightness_state(value)
-        if self._refreshing:
-            _LOGGER.info('%s %s refreshed to "%s". Updating...',
-                          self._node.name, value.label, value.data)
+        if (updated_brightness != self._brightness or
+                updated_state != self._state):
+            if self._refreshing:
+                _LOGGER.info('%s %s refreshed to "%s". Updating...',
+                             self._node.name, value.label, value.data)
+            else:
+                _LOGGER.info('%s %s changed to "%s". Updating...',
+                             self._node.name, value, value.data)
             self._refreshing = False
-            self._brightness, self._state = brightness_state(value)
-        elif updated_brightness != self._brightness or updated_state != self._state:
-            _LOGGER.info('%s %s changed to "%s". Updating...',
-                          self._node.name, value.label, value.data)
-            self._brightness, self._state = brightness_state(value)
+            self._brightness = updated_brightness
+            self._state = updated_state
         else:
-            _LOGGER.info('%s %s refreshing...',
-                          self._node.name, value.label)
+            _LOGGER.info('%s %s unchanged. Refreshing...',
+                         self._node.name, value.label)
+
             def _refresh_value():
                 """Used timer callback for delayed value refresh."""
                 self._refreshing = True
@@ -135,27 +140,12 @@ class ZwaveDimmer(Light):
         # brightness.
         brightness = (self._brightness / 255) * 99
 
-        _LOGGER.info('setting %s of %s to %s...',
-                      self._value.label, self._node.name, brightness)
         if self._node.set_dimmer(self._value.value_id, brightness):
-            _LOGGER.info('%s of %s successfully set to %s. Setting state to on.',
-                          self._value.label, self._node.name, brightness)
             self._state = STATE_ON
-        else:
-            _LOGGER.info('error setting %s of %s to %s!',
-                          self._value.label, self._node.name, brightness)
         self.update_ha_state()
-
 
     def turn_off(self, **kwargs):
         """ Turn the device off. """
-        _LOGGER.info('Turning %s off...',
-                     self._node.name)
         if self._node.set_dimmer(self._value.value_id, 0):
-            _LOGGER.info('%s of %s successfully set to %s. Setting state to off.',
-                          self._value.label, self._node.name, 0)
             self._state = STATE_OFF
-        else:
-            _LOGGER.info('error setting %s of %s to %s!',
-                          self._value.label, self._node.name, 0)
         self.update_ha_state()
