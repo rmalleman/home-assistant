@@ -82,31 +82,37 @@ class ZwaveDimmer(Light):
             else:
                 _LOGGER.info('%s %s changed to "%s". Updating...',
                              self._node.name, value, value.data)
-            self._refreshing = False
             self._brightness = updated_brightness
             self._state = updated_state
-            if self._timer is not None and self._timer.isAlive():
-                _LOGGER.info('%s %s Cancelling timer...',
-                             self._node.name, value.label)
-                self._timer.cancel()
+            self.cancel_timer()
+        elif self._refreshing:
+            _LOGGER.info('%s %s unchanged. Stopping refresh loop.',
+                         self._node.name, value.label)
+            self.cancel_timer()
+        elif self._timer is None:
+            _LOGGER.info('%s %s unchanged. Refreshing in 2 seconds...',
+                         self._node.name, value.label)
+
+            def _refresh_value():
+                """Used timer callback for delayed value refresh."""
+                self._refreshing = True
+                self._value.refresh()
+
+            self._timer = Timer(2, _refresh_value)
+            self._timer.start()
         else:
-            if self._refreshing:
-                _LOGGER.info('%s %s unchanged. Stopping refresh loop.',
-                             self._node.name, value.label)
-                self._refreshing = False
-            else:
-                _LOGGER.info('%s %s unchanged. Refreshing in 2 seconds...',
-                             self._node.name, value.label)
-
-                def _refresh_value():
-                    """Used timer callback for delayed value refresh."""
-                    self._refreshing = True
-                    self._value.refresh()
-
-                self._timer = Timer(2, _refresh_value)
-                self._timer.start()
+            _LOGGER.info('%s %s has defied all logic.',
+                         self._node.name, value.label)
 
         self.update_ha_state()
+
+    def cancel_timer(self):
+        """ Cancel existing timer. """
+        self._refreshing = False
+        if self._timer is not None and self._timer.isAlive():
+            _LOGGER.info('%s Cancelling existing timer...', self._node.name)
+            self._timer.cancel()
+            self._timer = None
 
     @property
     def should_poll(self):
