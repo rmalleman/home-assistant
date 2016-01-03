@@ -85,11 +85,11 @@ class ZwaveDimmer(Light):
             self._brightness = updated_brightness
             self._state = updated_state
             self.cancel_timer()
-        elif self._refreshing:
+        elif self._refreshing or self._timer is not None:
             _LOGGER.info('%s %s unchanged. Stopping refresh loop.',
                          self._node.name, value.label)
             self.cancel_timer()
-        elif self._timer is None:
+        else:
             _LOGGER.info('%s %s unchanged. Refreshing in 2 seconds...',
                          self._node.name, value.label)
 
@@ -100,9 +100,6 @@ class ZwaveDimmer(Light):
 
             self._timer = Timer(2, _refresh_value)
             self._timer.start()
-        else:
-            _LOGGER.info('%s %s has defied all logic.',
-                         self._node.name, value.label)
 
         self.update_ha_state()
 
