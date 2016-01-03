@@ -89,6 +89,7 @@ class ZwaveDimmer(Light):
             _LOGGER.info('%s %s value_changed at=updating_state',
                          self._node.name, value.label)
             self._refreshing = False
+            self._timer = None
             self._state = updated_state
             self._brightness = updated_brightness
         else:
