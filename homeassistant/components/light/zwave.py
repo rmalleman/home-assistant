@@ -11,7 +11,7 @@ https://home-assistant.io/components/light.zwave/
 from threading import Timer
 import logging
 
-from homeassistant.const import STATE_ON, STATE_OFF
+from homeassistant.const import STATE_ON, STATE_OFF, STATE_UNKNOWN
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS)
 import homeassistant.components.zwave as zwave
 
@@ -74,8 +74,7 @@ class ZwaveDimmer(Light):
             return
 
         updated_brightness, updated_state = brightness_state(value)
-        if (updated_brightness != self._brightness or
-                updated_state != self._state):
+        if updated_brightness != self._brightness:
             if self._refreshing:
                 _LOGGER.info('%s %s refreshed to "%s". Updating...',
                              self._node.name, value.label, value.data)
@@ -144,11 +143,11 @@ class ZwaveDimmer(Light):
         brightness = (self._brightness / 255) * 99
 
         if self._node.set_dimmer(self._value.value_id, brightness):
-            self._state = STATE_ON
-        self.update_ha_state()
+            self._state = STATE_UNKNOWN
+            self.update_ha_state()
 
     def turn_off(self, **kwargs):
         """ Turn the device off. """
         if self._node.set_dimmer(self._value.value_id, 0):
-            self._state = STATE_OFF
-        self.update_ha_state()
+            self._state = STATE_UNKNOWN
+            self.update_ha_state()
