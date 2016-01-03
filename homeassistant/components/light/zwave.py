@@ -11,7 +11,7 @@ https://home-assistant.io/components/light.zwave/
 from threading import Timer
 import logging
 
-from homeassistant.const import STATE_ON, STATE_OFF, STATE_UNKNOWN
+from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.components.light import (Light, ATTR_BRIGHTNESS)
 import homeassistant.components.zwave as zwave
 
@@ -74,22 +74,26 @@ class ZwaveDimmer(Light):
             return
 
         updated_brightness, updated_state = brightness_state(value)
-        if updated_brightness != self._brightness:
+        if (updated_brightness != self._brightness or
+                updated_state != self._state):
             if self._refreshing:
-                _LOGGER.info('%s %s refreshed to "%s". Updating...',
-                             self._node.name, value.label, value.data)
+                message = "refreshed"
             else:
-                _LOGGER.info('%s %s changed to "%s". Updating...',
-                             self._node.name, value.label, value.data)
+                message = "updated"
+            _LOGGER.info('%s %s %s from %s/%s to %s/%s.',
+                         self._node.name, message, value.label, self._state,
+                         self._brightness, updated_state,
+                         updated_brightness)
+
             self._brightness = updated_brightness
             self._state = updated_state
             self.cancel_timer()
         elif self._refreshing or self._timer is not None:
-            _LOGGER.info('%s %s unchanged. Stopping refresh loop.',
+            _LOGGER.info('%s %s unchanged.',
                          self._node.name, value.label)
             self.cancel_timer()
         else:
-            _LOGGER.info('%s %s unchanged. Refreshing in 2 seconds...',
+            _LOGGER.info('%s %s refreshing in 2 seconds...',
                          self._node.name, value.label)
 
             def _refresh_value():
@@ -135,6 +139,8 @@ class ZwaveDimmer(Light):
     def turn_on(self, **kwargs):
         """ Turn the device on. """
 
+        self._state = STATE_ON
+
         if ATTR_BRIGHTNESS in kwargs:
             self._brightness = kwargs[ATTR_BRIGHTNESS]
 
@@ -143,11 +149,15 @@ class ZwaveDimmer(Light):
         brightness = (self._brightness / 255) * 99
 
         if self._node.set_dimmer(self._value.value_id, brightness):
-            self._state = STATE_UNKNOWN
             self.update_ha_state()
 
     def turn_off(self, **kwargs):
         """ Turn the device off. """
+
+        self._state = STATE_OFF
+
+        if ATTR_BRIGHTNESS in kwargs:
+            self._brightness = 0
+
         if self._node.set_dimmer(self._value.value_id, 0):
-            self._state = STATE_UNKNOWN
             self.update_ha_state()
