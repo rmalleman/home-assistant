@@ -73,6 +73,7 @@ class ZwaveDimmer(Light):
         if self._value.value_id != value.value_id:
             return
 
+        # Log old and new data.
         updated_brightness, updated_state = brightness_state(value)
         _LOGGER.info('%s %s _value_changed old=%s/%s new=%s/%s data=%s refreshing=%s timer=%s',
                      self._node.name, value.label,
@@ -80,33 +81,35 @@ class ZwaveDimmer(Light):
                      updated_state, updated_brightness, value.data,
                      self._refreshing, self._timer)
 
+        # Cancel all existing timers. Last write wins.
+        self.cancel_existing_timer()
+
         if self._refreshing:
+            # Only update brightness and state if we solicited a refresh.
             _LOGGER.info('%s %s value_changed at=updating_state',
                          self._node.name, value.label)
             self._refreshing = False
-            self._brightness = updated_brightness
             self._state = updated_state
-            self.cancel_timer()
-        elif self._timer is not None:
-            self.cancel_timer()
+            self._brightness = updated_brightness
         else:
+            # Otherwise, schedule a refresh soon in the future.
             _LOGGER.info('%s %s value_changed at=scheduling_timer',
                          self._node.name, value.label)
 
             def _refresh_value():
                 """Used timer callback for delayed value refresh."""
-                self._refreshing = True
                 self._value.refresh()
 
+            self._refreshing = True
             self._timer = Timer(2, _refresh_value)
             self._timer.start()
 
         self.update_ha_state()
 
-    def cancel_timer(self):
+    def cancel_existing_timer(self):
         """ Cancel existing timer. """
         if self._timer is not None and self._timer.isAlive():
-            _LOGGER.info('%s %s at=cancel_timer',
+            _LOGGER.info('%s %s at=cancel_existing_timer',
                          self._node.name, self._value.label)
             self._timer.cancel()
             self._timer = None
