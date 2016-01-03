@@ -82,9 +82,6 @@ class ZwaveDimmer(Light):
                      updated_state, updated_brightness, value.data,
                      self._refreshing, self._timer)
 
-        # Cancel all existing timers. Last write wins.
-        self.cancel_existing_timer()
-
         if self._refreshing:
             # Only update brightness and state if we solicited a refresh.
             _LOGGER.info('node="%s" label="%s" at=updating_state old=%s/%s '
@@ -94,7 +91,7 @@ class ZwaveDimmer(Light):
                          updated_state, updated_brightness, value.data,
                          self._refreshing, self._timer)
             self._refreshing = False
-            self._timer = None
+            self.cancel_existing_timer()
             self._state = updated_state
             self._brightness = updated_brightness
         else:
@@ -104,6 +101,7 @@ class ZwaveDimmer(Light):
                              self._node.name, self._value.label, self._timer)
                 self._value.refresh()
 
+            self.cancel_existing_timer()
             self._refreshing = True
             self._timer = Timer(2, _refresh_value)
             self._timer.start()
@@ -122,7 +120,7 @@ class ZwaveDimmer(Light):
         """ Cancel existing timer. """
         if self._timer is not None and self._timer.isAlive():
             _LOGGER.info('node="%s" label="%s" at=cancel_existing_timer '
-                         ' timer="%s"',
+                         'timer="%s"',
                          self._node.name, self._value.label, self._timer)
             self._timer.cancel()
             self._timer = None
