@@ -140,7 +140,10 @@ class ZwaveDimmer(Light):
         """ Turn the device on. """
 
         self._state = STATE_ON
-        self._brightness = kwargs[ATTR_BRIGHTNESS]
+        if ATTR_BRIGHTNESS in kwargs:
+            self._brightness = kwargs[ATTR_BRIGHTNESS]
+        else:
+            self._brightness = 255
 
         # Zwave multilevel switches use a range of [0, 99] to control
         # brightness.
