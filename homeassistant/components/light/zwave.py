@@ -70,13 +70,7 @@ class ZwaveDimmer(Light):
     def _value_changed(self, value):
         """ Called when a value has changed on the network. """
 
-        # Discard and log messages from other values on this node
         if self._value.value_id != value.value_id:
-            _LOGGER.info('dropping message for the wrong value')
-            return
-        # Discard all messages from other nodes
-        if self._node.node_id != value.node.node_id:
-            _LOGGER.info('dropping message for the wrong node')
             return
 
         updated_brightness, updated_state = brightness_state(value)
