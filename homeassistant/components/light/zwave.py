@@ -81,7 +81,7 @@ class ZwaveDimmer(Light):
                              self._node.name, value.label, value.data)
             else:
                 _LOGGER.info('%s %s changed to "%s". Updating...',
-                             self._node.name, value, value.data)
+                             self._node.name, value.label, value.data)
             self._brightness = updated_brightness
             self._state = updated_state
             self.cancel_timer()
