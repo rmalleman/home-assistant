@@ -87,26 +87,34 @@ class ZwaveDimmer(Light):
 
         if self._refreshing:
             # Only update brightness and state if we solicited a refresh.
-            _LOGGER.info('node="%s" label="%s" at=value_changed '
-                         'at=updating_state',
-                         self._node.name, value.label)
+            _LOGGER.info('node="%s" label="%s" at=updating_state old=%s/%s '
+                         'new=%s/%s data=%s refreshing=%s timer=%s',
+                         self._node.name, value.label,
+                         self._state, self._brightness,
+                         updated_state, updated_brightness, value.data,
+                         self._refreshing, self._timer)
             self._refreshing = False
             self._timer = None
             self._state = updated_state
             self._brightness = updated_brightness
         else:
-            # Otherwise, schedule a refresh soon in the future.
-            _LOGGER.info('node="%s" label="%s" at=value_changed '
-                         'at=scheduling_timer',
-                         self._node.name, value.label)
-
             def _refresh_value():
                 """Used timer callback for delayed value refresh."""
+                _LOGGER.info('node="%s" label="%s" at=refreshing timer=%s',
+                             self._node.name, self._value.label, self._timer)
                 self._value.refresh()
 
             self._refreshing = True
             self._timer = Timer(2, _refresh_value)
             self._timer.start()
+            # Otherwise, schedule a refresh soon in the future.
+            _LOGGER.info('node="%s" label="%s" at=scheduling_timer old=%s/%s '
+                         'new=%s/%s data=%s refreshing=%s timer=%s',
+                         self._node.name, value.label,
+                         self._state, self._brightness,
+                         updated_state, updated_brightness, value.data,
+                         self._refreshing, self._timer)
+
 
         self.update_ha_state()
 
