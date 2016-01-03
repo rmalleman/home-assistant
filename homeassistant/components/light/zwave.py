@@ -123,7 +123,7 @@ class ZwaveDimmer(Light):
                          'timer="%s"',
                          self._node.name, self._value.label, self._timer)
             self._timer.cancel()
-            self._timer = None
+        self._timer = None
 
     @property
     def should_poll(self):
