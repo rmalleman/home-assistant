@@ -73,6 +73,7 @@ class ZwaveDimmer(Light):
         if self._value.value_id != value.value_id:
             return
 
+        _LOGGER.info('%s %s', self._node.name, value)
         updated_brightness, updated_state = brightness_state(value)
         if (updated_brightness != self._brightness or
                 updated_state != self._state):
@@ -81,7 +82,7 @@ class ZwaveDimmer(Light):
             else:
                 message = "updated"
             _LOGGER.info('%s %s %s from %s/%s to %s/%s.',
-                         self._node.name, message, value.label, self._state,
+                         self._node.name, value.label, message, self._state,
                          self._brightness, updated_state,
                          updated_brightness)
 
@@ -110,7 +111,8 @@ class ZwaveDimmer(Light):
         """ Cancel existing timer. """
         self._refreshing = False
         if self._timer is not None and self._timer.isAlive():
-            _LOGGER.info('%s Cancelling existing timer...', self._node.name)
+            _LOGGER.info('%s %s cancelling existing timer.',
+                         self._node.name, self._value.label)
             self._timer.cancel()
             self._timer = None
 
@@ -139,6 +141,11 @@ class ZwaveDimmer(Light):
     def turn_on(self, **kwargs):
         """ Turn the device on. """
 
+        _LOGGER.info('%s %s turning from %s/%s to %s/%s',
+                     self._node.name, self._value.label,
+                     self._state, self._brightness,
+                     'on', kwargs)
+
         self._state = STATE_ON
         if ATTR_BRIGHTNESS in kwargs:
             self._brightness = kwargs[ATTR_BRIGHTNESS]
@@ -154,6 +161,11 @@ class ZwaveDimmer(Light):
 
     def turn_off(self, **kwargs):
         """ Turn the device off. """
+
+        _LOGGER.info('%s %s turning from %s/%s to %s/%s',
+                     self._node.name, self._value.label,
+                     self._state, self._brightness,
+                     'off', kwargs)
 
         self._state = STATE_OFF
         self._brightness = 0
