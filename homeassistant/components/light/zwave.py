@@ -113,7 +113,6 @@ class ZwaveDimmer(Light):
                          updated_state, updated_brightness, value.data,
                          self._refreshing, self._timer)
 
-
         self.update_ha_state()
 
     def cancel_existing_timer(self):
@@ -165,8 +164,8 @@ class ZwaveDimmer(Light):
         # brightness.
         brightness = (self._brightness / 255) * 99
 
-        if self._node.set_dimmer(self._value.value_id, brightness):
-            self.update_ha_state()
+        self._node.values[self._value.value_id] = brightness
+        self.update_ha_state()
 
     def turn_off(self, **kwargs):
         """ Turn the device off. """
@@ -179,5 +178,5 @@ class ZwaveDimmer(Light):
         self._state = STATE_OFF
         self._brightness = 0
 
-        if self._node.set_dimmer(self._value.value_id, 0):
-            self.update_ha_state()
+        self._node.values[self._value.value_id] = 0
+        self.update_ha_state()
