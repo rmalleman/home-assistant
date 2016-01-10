@@ -6,15 +6,17 @@ Tests the librato compoment.
 """
 # pylint: disable=protected-access,too-many-public-methods
 import unittest
-import unittest
+from datetime import datetime, timedelta
 from unittest.mock import patch
-from tests.common import mock_state_change_event
+from tests.common import (mock_state_change_event, fire_time_changed)
 
 import librato
 
 import homeassistant.core as ha
 from homeassistant.components import librato as librato_component
-from homeassistant.const import STATE_ON
+from homeassistant.const import (STATE_ON, STATE_OFF)
+from homeassistant import util
+import homeassistant.util.dt as dt_util
 
 class TestComponentsLibrato(unittest.TestCase):
     """ Tests homeassistant.components.librato module. """
@@ -77,4 +79,30 @@ class TestComponentsLibrato(unittest.TestCase):
             })
         mock_state_change_event(self.hass, state)
         self.hass.pool.block_till_done()
+        self.assertEqual(3, mock_librato.call_count)
+
+    @patch('librato.queue.Queue.add')
+    def test_periodic_metrics(self, mock_librato):
+        self.assertTrue(librato_component.setup(self.hass, {
+                'librato': {
+                    'user': 'foo',
+                    'token': 'foo'
+                }
+            }))
+
+        self.hass.states.set('test.entity', STATE_OFF)
+        self.hass.pool.block_till_done()
+        self.assertEqual(1, len(self.hass.states.all()))
+        self.assertEqual(1, mock_librato.call_count)
+
+        self.hass.states.set('test.entity', STATE_ON)
+        self.hass.pool.block_till_done()
+        self.assertEqual(2, mock_librato.call_count)
+
+        now = dt_util.utcnow()
+        for i in range(60):
+            future = now + timedelta(seconds=i)
+            fire_time_changed(self.hass, future)
+            self.hass.pool.block_till_done()
+
         self.assertEqual(3, mock_librato.call_count)
