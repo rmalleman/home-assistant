@@ -11,21 +11,23 @@ import logging
 import signal
 import threading
 import enum
-import re
 import functools as ft
 from collections import namedtuple
 
 from homeassistant.const import (
     __version__, EVENT_HOMEASSISTANT_START, EVENT_HOMEASSISTANT_STOP,
-    SERVICE_HOMEASSISTANT_STOP, EVENT_TIME_CHANGED, EVENT_STATE_CHANGED,
+    SERVICE_HOMEASSISTANT_STOP, SERVICE_HOMEASSISTANT_RESTART,
+    EVENT_TIME_CHANGED, EVENT_STATE_CHANGED,
     EVENT_CALL_SERVICE, ATTR_NOW, ATTR_DOMAIN, ATTR_SERVICE, MATCH_ALL,
     EVENT_SERVICE_EXECUTED, ATTR_SERVICE_CALL_ID, EVENT_SERVICE_REGISTERED,
-    TEMP_CELCIUS, TEMP_FAHRENHEIT, ATTR_FRIENDLY_NAME)
+    TEMP_CELCIUS, TEMP_FAHRENHEIT, ATTR_FRIENDLY_NAME, ATTR_SERVICE_DATA,
+    RESTART_EXIT_CODE)
 from homeassistant.exceptions import (
     HomeAssistantError, InvalidEntityFormatError)
 import homeassistant.util as util
 import homeassistant.util.dt as dt_util
 import homeassistant.util.location as location
+from homeassistant.helpers.entity import valid_entity_id, split_entity_id
 import homeassistant.helpers.temperature as temp_helper
 from homeassistant.config import get_default_config_dir
 
@@ -41,9 +43,6 @@ SERVICE_CALL_LIMIT = 10  # seconds
 # During bootstrap of HA (see bootstrap._setup_component()) worker threads
 # will be added for each component that polls devices.
 MIN_WORKER_THREAD = 2
-
-# Pattern for validating entity IDs (format: <domain>.<entity>)
-ENTITY_ID_PATTERN = re.compile(r"^(?P<domain>\w+)\.(?P<entity>\w+)$")
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -73,20 +72,27 @@ class HomeAssistant(object):
     def block_till_stopped(self):
         """Register service homeassistant/stop and will block until called."""
         request_shutdown = threading.Event()
+        request_restart = threading.Event()
 
         def stop_homeassistant(*args):
             """Stop Home Assistant."""
             request_shutdown.set()
 
+        def restart_homeassistant(*args):
+            """Reset Home Assistant."""
+            request_restart.set()
+            request_shutdown.set()
+
         self.services.register(
             DOMAIN, SERVICE_HOMEASSISTANT_STOP, stop_homeassistant)
+        self.services.register(
+            DOMAIN, SERVICE_HOMEASSISTANT_RESTART, restart_homeassistant)
 
-        if os.name != "nt":
-            try:
-                signal.signal(signal.SIGTERM, stop_homeassistant)
-            except ValueError:
-                _LOGGER.warning(
-                    'Could not bind to SIGQUIT. Are you running in a thread?')
+        try:
+            signal.signal(signal.SIGTERM, stop_homeassistant)
+        except ValueError:
+            _LOGGER.warning(
+                'Could not bind to SIGTERM. Are you running in a thread?')
 
         while not request_shutdown.isSet():
             try:
@@ -95,6 +101,7 @@ class HomeAssistant(object):
                 break
 
         self.stop()
+        return RESTART_EXIT_CODE if request_restart.isSet() else 0
 
     def stop(self):
         """Stop Home Assistant and shuts down all threads."""
@@ -339,7 +346,7 @@ class State(object):
     def __init__(self, entity_id, state, attributes=None, last_changed=None,
                  last_updated=None):
         """Initialize a new state."""
-        if not ENTITY_ID_PATTERN.match(entity_id):
+        if not valid_entity_id(entity_id):
             raise InvalidEntityFormatError((
                 "Invalid entity id encountered: {}. "
                 "Format should be <domain>.<object_id>").format(entity_id))
@@ -360,12 +367,12 @@ class State(object):
     @property
     def domain(self):
         """Domain of this state."""
-        return util.split_entity_id(self.entity_id)[0]
+        return split_entity_id(self.entity_id)[0]
 
     @property
     def object_id(self):
         """Object id of this state."""
-        return util.split_entity_id(self.entity_id)[1]
+        return split_entity_id(self.entity_id)[1]
 
     @property
     def name(self):
@@ -558,13 +565,14 @@ class Service(object):
 class ServiceCall(object):
     """Represents a call to a service."""
 
-    __slots__ = ['domain', 'service', 'data']
+    __slots__ = ['domain', 'service', 'data', 'call_id']
 
-    def __init__(self, domain, service, data=None):
+    def __init__(self, domain, service, data=None, call_id=None):
         """Initialize a service call."""
         self.domain = domain
         self.service = service
         self.data = data or {}
+        self.call_id = call_id
 
     def __repr__(self):
         if self.data:
@@ -636,10 +644,13 @@ class ServiceRegistry(object):
         the keys ATTR_DOMAIN and ATTR_SERVICE in your service_data.
         """
         call_id = self._generate_unique_id()
-        event_data = service_data or {}
-        event_data[ATTR_DOMAIN] = domain
-        event_data[ATTR_SERVICE] = service
-        event_data[ATTR_SERVICE_CALL_ID] = call_id
+
+        event_data = {
+            ATTR_DOMAIN: domain,
+            ATTR_SERVICE: service,
+            ATTR_SERVICE_DATA: service_data,
+            ATTR_SERVICE_CALL_ID: call_id,
+        }
 
         if blocking:
             executed_event = threading.Event()
@@ -661,15 +672,16 @@ class ServiceRegistry(object):
 
     def _event_to_service_call(self, event):
         """Callback for SERVICE_CALLED events from the event bus."""
-        service_data = dict(event.data)
-        domain = service_data.pop(ATTR_DOMAIN, None)
-        service = service_data.pop(ATTR_SERVICE, None)
+        service_data = event.data.get(ATTR_SERVICE_DATA)
+        domain = event.data.get(ATTR_DOMAIN)
+        service = event.data.get(ATTR_SERVICE)
+        call_id = event.data.get(ATTR_SERVICE_CALL_ID)
 
         if not self.has_service(domain, service):
             return
 
         service_handler = self._services[domain][service]
-        service_call = ServiceCall(domain, service, service_data)
+        service_call = ServiceCall(domain, service, service_data, call_id)
 
         # Add a job to the pool that calls _execute_service
         self._pool.add_job(JobPriority.EVENT_SERVICE,
@@ -681,10 +693,9 @@ class ServiceRegistry(object):
         service, call = service_and_call
         service(call)
 
-        if ATTR_SERVICE_CALL_ID in call.data:
+        if call.call_id is not None:
             self._bus.fire(
-                EVENT_SERVICE_EXECUTED,
-                {ATTR_SERVICE_CALL_ID: call.data[ATTR_SERVICE_CALL_ID]})
+                EVENT_SERVICE_EXECUTED, {ATTR_SERVICE_CALL_ID: call.call_id})
 
     def _generate_unique_id(self):
         """Generate a unique service call id."""
