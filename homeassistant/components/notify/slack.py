@@ -54,20 +54,8 @@ class SlackNotificationService(BaseNotificationService):
         import slacker
 
         channel = kwargs.get('channel', self._default_channel)
-        username = kwargs.get('username', None)
-        as_user = kwargs.get('as_user', None)
-        parse = kwargs.get('parse', None)
-        link_names = kwargs.get('link_names', None)
-        attachments = kwargs.get('attachments', None)
-        unfurl_links = kwargs.get('unfurl_links', None)
-        unfurl_media = kwargs.get('unfurl_media', None)
-        icon_url = kwargs.get('icon_url', None)
-        icon_emoji = kwargs.get('icon_emoji', None)
 
         try:
-            self.slack.chat.post_message(channel, message, username, as_user,
-                                         parse, link_names, attachments,
-                                         unfurl_links, unfurl_media, icon_url,
-                                         icon_emoji)
+            self.slack.chat.post_message(channel, message)
         except slacker.Error:
             _LOGGER.exception("Could not send slack notification")
