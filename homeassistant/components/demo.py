@@ -1,16 +1,15 @@
 """
-homeassistant.components.demo
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Sets up a demo environment that mimics interaction with devices.
+
+For more details about this component, please refer to the documentation
+https://home-assistant.io/components/demo/
 """
 import time
 
-import homeassistant.core as ha
 import homeassistant.bootstrap as bootstrap
+import homeassistant.core as ha
 import homeassistant.loader as loader
-from homeassistant.const import (
-    CONF_PLATFORM, ATTR_ENTITY_ID)
+from homeassistant.const import ATTR_ENTITY_ID, CONF_PLATFORM
 
 DOMAIN = "demo"
 
@@ -34,7 +33,7 @@ COMPONENTS_WITH_DEMO_PLATFORM = [
 
 
 def setup(hass, config):
-    """ Setup a demo environment. """
+    """Setup a demo environment."""
     group = loader.get_component('group')
     configurator = loader.get_component('configurator')
 
@@ -117,7 +116,7 @@ def setup(hass, config):
     configurator_ids = []
 
     def hue_configuration_callback(data):
-        """ Fake callback, mark config as done. """
+        """Fake callback, mark config as done."""
         time.sleep(2)
 
         # First time it is called, pretend it failed.
