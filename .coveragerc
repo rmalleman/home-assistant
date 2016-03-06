@@ -51,14 +51,14 @@ omit =
     homeassistant/components/zwave.py
     homeassistant/components/*/zwave.py
 
-    homeassistant/components/rfxtrx.py
-    homeassistant/components/*/rfxtrx.py
-
     homeassistant/components/mysensors.py
     homeassistant/components/*/mysensors.py
 
     homeassistant/components/nest.py
     homeassistant/components/*/nest.py
+
+    homeassistant/components/rfxtrx.py
+    homeassistant/components/*/rfxtrx.py
 
     homeassistant/components/rpi_gpio.py
     homeassistant/components/*/rpi_gpio.py
