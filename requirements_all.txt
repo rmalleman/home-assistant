@@ -218,9 +218,7 @@ python-wink==0.6.2
 # homeassistant.components.keyboard
 pyuserinput==0.1.9
 
-# homeassistant.components.light.vera
-# homeassistant.components.sensor.vera
-# homeassistant.components.switch.vera
+# homeassistant.components.vera
 pyvera==0.2.8
 
 # homeassistant.components.wemo
@@ -278,6 +276,12 @@ urllib3
 
 # homeassistant.components.camera.uvc
 uvcclient==0.8
+
+# homeassistant.components.binary_sensor.vera
+# homeassistant.components.light.vera
+# homeassistant.components.sensor.vera
+# homeassistant.components.switch.vera
+vera
 
 # homeassistant.components.verisure
 vsure==0.6.1
