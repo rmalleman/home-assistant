@@ -26,11 +26,13 @@ omit =
     homeassistant/components/modbus.py
     homeassistant/components/*/modbus.py
 
+    homeassistant/components/tellstick.py
     homeassistant/components/*/tellstick.py
 
     homeassistant/components/tellduslive.py
     homeassistant/components/*/tellduslive.py
 
+    homeassistant/components/vera.py
     homeassistant/components/*/vera.py
 
     homeassistant/components/ecobee.py
@@ -56,9 +58,6 @@ omit =
 
     homeassistant/components/nest.py
     homeassistant/components/*/nest.py
-
-    homeassistant/components/rfxtrx.py
-    homeassistant/components/*/rfxtrx.py
 
     homeassistant/components/rpi_gpio.py
     homeassistant/components/*/rpi_gpio.py
@@ -123,6 +122,7 @@ omit =
     homeassistant/components/notify/telegram.py
     homeassistant/components/notify/twitter.py
     homeassistant/components/notify/xmpp.py
+    homeassistant/components/scene/hunterdouglas_powerview.py
     homeassistant/components/sensor/arest.py
     homeassistant/components/sensor/bitcoin.py
     homeassistant/components/sensor/cpuspeed.py
@@ -139,8 +139,8 @@ omit =
     homeassistant/components/sensor/openweathermap.py
     homeassistant/components/sensor/rest.py
     homeassistant/components/sensor/sabnzbd.py
-    homeassistant/components/sensor/steam_online.py
     homeassistant/components/sensor/speedtest.py
+    homeassistant/components/sensor/steam_online.py
     homeassistant/components/sensor/swiss_public_transport.py
     homeassistant/components/sensor/systemmonitor.py
     homeassistant/components/sensor/temper.py
@@ -150,8 +150,8 @@ omit =
     homeassistant/components/sensor/twitch.py
     homeassistant/components/sensor/worldclock.py
     homeassistant/components/switch/arest.py
-    homeassistant/components/switch/edimax.py
     homeassistant/components/switch/dlink.py
+    homeassistant/components/switch/edimax.py
     homeassistant/components/switch/hikvisioncam.py
     homeassistant/components/switch/mystrom.py
     homeassistant/components/switch/orvibo.py
@@ -161,6 +161,7 @@ omit =
     homeassistant/components/thermostat/homematic.py
     homeassistant/components/thermostat/proliphix.py
     homeassistant/components/thermostat/radiotherm.py
+
 
 [report]
 # Regexes for lines to exclude from consideration
